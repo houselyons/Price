@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HouseLyons Live Price Tracker</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="light"] {
+      --text-xs: clamp(0.75rem,0.7rem + 0.25vw,0.875rem);
+      --text-sm: clamp(0.875rem,0.8rem + 0.35vw,1rem);
+      --text-base: clamp(1rem,0.95rem + 0.25vw,1.125rem);
+      --text-lg: clamp(1.125rem,1rem + 0.75vw,1.5rem);
+      --text-xl: clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
+      --space-1:0.25rem;--space-2:0.5rem;--space-3:0.75rem;--space-4:1rem;--space-5:1.25rem;--space-6:1.5rem;--space-8:2rem;--space-10:2.5rem;--space-12:3rem;
+      --color-bg:#f7f6f2;--color-surface:#f9f8f5;--color-surface-2:#fbfbf9;--color-border:#d4d1ca;--color-text:#28251d;--color-text-muted:#6e6b64;--color-primary:#01696f;--color-primary-hover:#0c4e54;--color-blue:#006494;--color-success:#437a22;--color-error:#a12c7b;--color-warning:#964219;
+      --radius-md:0.5rem;--radius-lg:0.75rem;--radius-xl:1rem;--radius-full:9999px;
+      --shadow-md:0 4px 12px oklch(0.2 0.01 80 / 0.08);
+      --font-body:'Satoshi',Inter,sans-serif;
+    }
+    [data-theme="dark"] {
+      --color-bg:#171614;--color-surface:#1c1b19;--color-surface-2:#201f1d;--color-border:#393836;--color-text:#cdccca;--color-text-muted:#9d9b96;--color-primary:#4f98a3;--color-primary-hover:#227f8b;--color-blue:#5591c7;--color-success:#6daa45;--color-error:#d163a7;--color-warning:#e8af34;
+      --shadow-md:0 8px 20px rgba(0,0,0,.28);
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);min-height:100%}
+    body{line-height:1.5}
+    button,input,select{font:inherit}
+    .app{max-width:520px;margin:0 auto;min-height:100dvh;padding:var(--space-4);display:grid;gap:var(--space-4)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3)}
+    .brand{display:flex;align-items:center;gap:var(--space-3)}
+    .logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--color-primary),var(--color-blue));display:grid;place-items:center;box-shadow:var(--shadow-md)}
+    .card{background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-border) 80%, transparent);border-radius:var(--radius-xl);padding:var(--space-4);box-shadow:var(--shadow-md)}
+    .hero{display:grid;gap:var(--space-4)}
+    .address{font-size:var(--text-xs);color:var(--color-text-muted);word-break:break-all}
+    .value{font-size:var(--text-xl);font-weight:700}
+    .muted{color:var(--color-text-muted)}
+    .row{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
+    .grid{display:grid;gap:var(--space-3)}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .pill{display:inline-flex;align-items:center;gap:.4rem;border-radius:var(--radius-full);padding:.45rem .8rem;background:var(--color-surface-2);border:1px solid color-mix(in oklab,var(--color-border) 80%, transparent);font-size:var(--text-xs)}
+    .btn{border:0;border-radius:14px;padding:.9rem 1rem;font-weight:700;min-height:46px;cursor:pointer}
+    .btn-primary{background:var(--color-primary);color:white}.btn-primary:hover{background:var(--color-primary-hover)}
+    .btn-secondary{background:var(--color-surface-2);color:var(--color-text);border:1px solid var(--color-border)}
+    .field{display:grid;gap:.45rem}
+    .label{font-size:var(--text-sm);font-weight:600}
+    .input,.select{width:100%;border-radius:14px;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text);padding:.9rem 1rem;min-height:46px}
+    .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+    .stat{background:var(--color-surface-2);border-radius:var(--radius-lg);padding:var(--space-3);border:1px solid color-mix(in oklab,var(--color-border) 80%, transparent)}
+    .stat b{display:block;font-size:var(--text-lg)}
+    .source{font-size:var(--text-xs);padding:.4rem .6rem;border-radius:999px}
+    .ok{background:color-mix(in oklab,var(--color-success) 20%, transparent);color:var(--color-success)}
+    .warn{background:color-mix(in oklab,var(--color-warning) 20%, transparent);color:var(--color-warning)}
+    .err{background:color-mix(in oklab,var(--color-error) 20%, transparent);color:var(--color-error)}
+    .list{display:grid;gap:var(--space-3)}
+    .pair{padding:var(--space-3);border-radius:var(--radius-lg);background:var(--color-surface-2);border:1px solid color-mix(in oklab,var(--color-border) 80%, transparent)}
+    .tiny{font-size:var(--text-xs)}
+    a{color:var(--color-primary)}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 7.5C6 6.12 7.12 5 8.5 5H15.5C16.88 5 18 6.12 18 7.5V16.5C18 17.88 16.88 19 15.5 19H8.5C7.12 19 6 17.88 6 16.5V7.5Z" stroke="white" stroke-width="1.8"/><path d="M9 10H15M9 14H13" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div style="font-weight:700">HouseLyons Live Price Tracker</div>
+          <div class="tiny muted">Mobile token value checker</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" id="themeBtn" aria-label="Toggle theme">Theme</button>
+    </section>
+
+
+    <section class="card hero">
+      <div>
+        <div class="muted tiny">Tracked contract</div>
+        <div class="address" id="trackedContract">0x7e0d74541dfabcf6ed726c0a2cef2972d7d25255</div>
+      </div>
+      <div>
+        <div class="muted tiny">Estimated value</div>
+        <div class="value" id="tokenValue">$0.00</div>
+        <div class="row tiny muted">
+          <span id="tokenName">Waiting for lookup…</span>
+          <span class="source warn" id="sourceBadge">No data yet</span>
+        </div>
+      </div>
+      <div class="grid cols-2">
+        <div class="field">
+          <label class="label" for="network">Network</label>
+          <select id="network" class="select">
+<option value="bsc">BSC</option>
+            <option value="base">Base</option>
+            <option value="ethereum">Ethereum</option>           
+            <option value="arbitrum-one">Arbitrum</option>
+            <option value="polygon-pos">Polygon</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="balance">Your token balance</label>
+          <input id="balance" class="input" type="number" step="any" placeholder="0" />
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="contract">Token contract</label>
+        <input id="contract" class="input" value="0x7e0d74541dfabcf6ed726c0a2cef2972d7d25255" />
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" id="lookupBtn">Refresh price</button>
+        <button class="btn btn-secondary" id="loadBabyBtn">Load HouseLyons Contract</button>
+      </div>
+    </section>
+
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div style="font-weight:700">Price details</div>
+          <div class="tiny muted">CoinGecko first, then GeckoTerminal, then DexScreener</div>
+        </div>
+        <div class="pill" id="statusPill">Ready</div>
+      </div>
+      <div class="stats" style="margin-top:1rem">
+        <div class="stat"><span class="tiny muted">Price / token</span><b id="priceUsd">$0.00</b></div>
+        <div class="stat"><span class="tiny muted">24h change</span><b id="change24h">—</b></div>
+        <div class="stat"><span class="tiny muted">Liquidity</span><b id="liquidity">—</b></div>
+        <div class="stat"><span class="tiny muted">Top pool</span><b id="topPool">—</b></div>
+      </div>
+    </section>
+
+
+    <section class="card">
+      <div style="font-weight:700;margin-bottom:.75rem">Detected pools</div>
+      <div id="pairsList" class="list"><div class="pair tiny muted">No pool data yet.</div></div>
+    </section>
+
+
+    <section class="card tiny muted">
+      This app tries CoinGecko’s contract-based token pricing first, then falls back to GeckoTerminal and DexScreener if CoinGecko does not return a usable price.
+    </section>
+  </main>
+
+
+  <script>
+    const els = {
+      themeBtn: document.getElementById('themeBtn'),
+      network: document.getElementById('network'),
+      balance: document.getElementById('balance'),
+      contract: document.getElementById('contract'),
+      lookupBtn: document.getElementById('lookupBtn'),
+      loadBabyBtn: document.getElementById('loadBabyBtn'),
+      tokenValue: document.getElementById('tokenValue'),
+      tokenName: document.getElementById('tokenName'),
+      sourceBadge: document.getElementById('sourceBadge'),
+      statusPill: document.getElementById('statusPill'),
+      priceUsd: document.getElementById('priceUsd'),
+      change24h: document.getElementById('change24h'),
+      liquidity: document.getElementById('liquidity'),
+      topPool: document.getElementById('topPool'),
+      pairsList: document.getElementById('pairsList'),
+      trackedContract: document.getElementById('trackedContract')
+    };
+
+
+    const babyContract = '0x7e0d74541dfabcf6ed726c0a2cef2972d7d25255';
+
+
+    const cgSimpleNetworkMap = {
+      base: 'base',
+      ethereum: 'ethereum',
+      bsc: 'binance-smart-chain',
+      'arbitrum-one': 'arbitrum-one',
+      'polygon-pos': 'polygon-pos'
+    };
+
+
+    const gtNetworkMap = {
+      base: 'base', ethereum: 'eth', bsc: 'bsc', 'arbitrum-one': 'arbitrum', 'polygon-pos': 'polygon_pos'
+    };
+
+
+    const money = (n) => isFinite(n) ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:n<1?8:2}).format(n) : '—';
+    const short = (s) => s ? s.slice(0,6) + '…' + s.slice(-4) : '—';
+
+
+    function setStatus(text, kind='warn') {
+      els.statusPill.textContent = text;
+      els.statusPill.className = 'pill ' + (kind === 'ok' ? 'ok' : kind === 'err' ? 'err' : 'warn');
+    }
+
+
+    function setSource(text, kind='warn') {
+      els.sourceBadge.textContent = text;
+      els.sourceBadge.className = 'source ' + (kind === 'ok' ? 'ok' : kind === 'err' ? 'err' : 'warn');
+    }
+
+
+    function applyThemeToggle() {
+      let d = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', d);
+      els.themeBtn.addEventListener('click', () => {
+        d = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', d);
+      });
+    }
+
+
+    async function fetchJson(url) {
+      const res = await fetch(url, {headers:{accept:'application/json'}});
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+
+
+    function updateValue(price) {
+      const bal = parseFloat(els.balance.value || '0');
+      const total = bal * (price || 0);
+      els.tokenValue.textContent = money(total);
+    }
+
+
+    function renderPairs(pairs = []) {
+      if (!pairs.length) {
+        els.pairsList.innerHTML = '<div class="pair tiny muted">No pool data found.</div>';
+        return;
+      }
+      els.pairsList.innerHTML = pairs.slice(0, 6).map((p, i) => {
+        const url = p.url || p.info?.url || '#';
+        const name = p.pairLabel || p.baseToken?.symbol + ' / ' + p.quoteToken?.symbol || 'Pool';
+        const dex = p.dexId || p.attributes?.dex_name || 'DEX';
+        const liq = p.liquidity?.usd ?? p.attributes?.reserve_in_usd;
+        const price = p.priceUsd ?? p.attributes?.base_token_price_usd;
+        return `<div class="pair">
+          <div class="row" style="justify-content:space-between">
+            <strong>${i + 1}. ${name}</strong>
+            <span class="tiny muted">${dex}</span>
+          </div>
+          <div class="tiny muted" style="margin-top:.35rem">Price: ${money(Number(price || 0))} · Liquidity: ${money(Number(liq || 0))}</div>
+          <div class="tiny" style="margin-top:.35rem"><a href="${url}" target="_blank" rel="noopener noreferrer">Open pool</a></div>
+        </div>`;
+      }).join('');
+    }
+
+
+    async function getCoinGeckoPrice(network, contract) {
+      const net = cgSimpleNetworkMap[network];
+      const url = `https://api.coingecko.com/api/v3/simple/token_price/${net}?contract_addresses=${contract}&vs_currencies=usd&include_24hr_change=true`;
+      const data = await fetchJson(url);
+      const hit = data[contract.toLowerCase()];
+      if (!hit || !hit.usd) return null;
+      return {source:'CoinGecko', price:Number(hit.usd), change24h:Number(hit.usd_24h_change ?? NaN)};
+    }
+
+
+    async function getGeckoTerminal(network, contract) {
+      const net = gtNetworkMap[network];
+      const url = `https://api.geckoterminal.com/api/v2/simple/networks/${net}/token_price/${contract}`;
+      const priceData = await fetchJson(url).catch(() => null);
+      const poolsUrl = `https://api.geckoterminal.com/api/v2/networks/${net}/tokens/${contract}/pools?page=1`;
+      const poolsData = await fetchJson(poolsUrl).catch(() => null);
+      const pools = (poolsData?.data || []).map(p => ({
+        pairLabel: p.attributes?.name,
+        dexId: p.attributes?.dex_name,
+        liquidity: { usd: Number(p.attributes?.reserve_in_usd || 0) },
+        priceUsd: Number(p.attributes?.base_token_price_usd || 0),
+        url: p.attributes?.address ? `https://www.geckoterminal.com/${net}/pools/${p.attributes.address}` : '#'
+      }));
+      const gtPrice = priceData?.data?.attributes?.token_prices?.[contract.toLowerCase()];
+      if (!gtPrice && !pools.length) return null;
+      return {
+        source:'GeckoTerminal',
+        price:Number(gtPrice || pools[0]?.priceUsd || 0),
+        liquidity:Number(pools[0]?.liquidity?.usd || 0),
+        topPool:pools[0]?.pairLabel || 'Top pool found',
+        pairs:pools
+      };
+    }
+
+
+    async function getDexScreener(contract) {
+      const url = `https://api.dexscreener.com/latest/dex/tokens/${contract}`;
+      const data = await fetchJson(url);
+      const pairs = (data.pairs || []).sort((a,b)=>(b.liquidity?.usd||0)-(a.liquidity?.usd||0));
+      if (!pairs.length) return null;
+      return {
+        source:'DexScreener',
+        price:Number(pairs[0].priceUsd || 0),
+        change24h:Number(pairs[0].priceChange?.h24 || NaN),
+        liquidity:Number(pairs[0].liquidity?.usd || 0),
+        topPool:pairs[0].pairAddress ? short(pairs[0].pairAddress) : (pairs[0].dexId || 'Pool'),
+        name: pairs[0].baseToken?.name || pairs[0].baseToken?.symbol,
+        pairs
+      };
+    }
+
+
+    async function lookup() {
+      const contract = els.contract.value.trim().toLowerCase();
+      const network = els.network.value;
+      if (!/^0x[a-f0-9]{40}$/.test(contract)) {
+        setStatus('Enter a valid EVM contract', 'err');
+        setSource('Bad contract', 'err');
+        return;
+      }
+      els.trackedContract.textContent = contract;
+      setStatus('Checking sources…');
+      setSource('Looking up…');
+      els.tokenName.textContent = 'Fetching market data…';
+      try {
+        let result = null;
+        try { result = await getCoinGeckoPrice(network, contract); } catch {}
+        if (result) {
+          els.priceUsd.textContent = money(result.price);
+          els.change24h.textContent = isFinite(result.change24h) ? `${result.change24h.toFixed(2)}%` : '—';
+          els.liquidity.textContent = '—';
+          els.topPool.textContent = 'CoinGecko mapped';
+          els.tokenName.textContent = 'Price returned from CoinGecko';
+          renderPairs([]);
+          updateValue(result.price);
+          setStatus('CoinGecko success', 'ok');
+          setSource('CoinGecko', 'ok');
+          return;
+        }
+
+
+        try { result = await getGeckoTerminal(network, contract); } catch {}
+        if (result && result.price) {
+          els.priceUsd.textContent = money(result.price);
+          els.change24h.textContent = '—';
+          els.liquidity.textContent = money(result.liquidity || 0);
+          els.topPool.textContent = result.topPool || 'Top GT pool';
+          els.tokenName.textContent = 'Fallback from GeckoTerminal';
+          renderPairs(result.pairs || []);
+          updateValue(result.price);
+          setStatus('GeckoTerminal fallback', 'ok');
+          setSource('GeckoTerminal', 'ok');
+          return;
+        }
+
+
+        result = await getDexScreener(contract);
+        if (result) {
+          els.priceUsd.textContent = money(result.price);
+          els.change24h.textContent = isFinite(result.change24h) ? `${result.change24h.toFixed(2)}%` : '—';
+          els.liquidity.textContent = money(result.liquidity || 0);
+          els.topPool.textContent = result.topPool || 'Top Dex pair';
+          els.tokenName.textContent = result.name || 'Fallback from DexScreener';
+          renderPairs(result.pairs || []);
+          updateValue(result.price);
+          setStatus('DexScreener fallback', 'ok');
+          setSource('DexScreener', 'ok');
+          return;
+        }
+
+
+        throw new Error('No market data found');
+      } catch (err) {
+        els.priceUsd.textContent = '$0.00';
+        els.change24h.textContent = '—';
+        els.liquidity.textContent = '—';
+        els.topPool.textContent = '—';
+        els.tokenName.textContent = 'No live market source found';
+        renderPairs([]);
+        updateValue(0);
+        setStatus('No usable price source', 'err');
+        setSource('No feed', 'err');
+      }
+    }
+
+
+    els.lookupBtn.addEventListener('click', lookup);
+    els.loadBabyBtn.addEventListener('click', () => { els.contract.value = babyContract; lookup(); });
+    els.balance.addEventListener('input', () => {
+      const numeric = parseFloat(String(els.priceUsd.textContent).replace(/[$,]/g,''));
+      updateValue(isFinite(numeric) ? numeric : 0);
+    });
+
+
+    applyThemeToggle();
+    lookup();
+  </script>
+</body>
+</html>
